@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const db = "../../backend/db.js";
 const app = express();
 const port = 3000;
 
@@ -75,7 +76,9 @@ app.get('/', (req, res) => {
 
 // Get all employees
 app.get('/api/employees', (req, res) => {
-    res.json(employees);
+    res.json(
+        db.getAllEmployees()
+    );
 });
 
 // Get a specific employee
