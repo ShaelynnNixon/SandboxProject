@@ -1,7 +1,8 @@
+const {format} = require("node:util");
 const sqlite3 = require('sqlite3').verbose();
 
 // Do not change this name. The 'cs208_project.sqlite' will be created in the same folder as db.js
-const SQLITE_FILE_NAME = "db.sqlite";
+const SQLITE_FILE_NAME = "./db.sqlite";
 
 let db;
 
@@ -26,15 +27,13 @@ function getAllEmployees()
     {
         db.serialize(function()
         {
-            // note the backticks ` which allow us to write a multiline string
             const sql =
-                `SELECT id, firstname, lastname, role
+                `SELECT id, name, role
                  FROM employees;`;
 
             let listOfEmployees = [];
 
-            // print table header
-            printTableHeader(["id", "firstname", "lastname", "role"]);
+            printTableHeader(["id", "name", "role"]);
 
             const callbackToProcessEachRow = function(err, row)
             {
@@ -45,21 +44,18 @@ function getAllEmployees()
 
                 // extract the values from the current row
                 const id = row.id;
-                const firstname = row.firstname;
-                const lastname = row.lastname;
+                const name = row.name;
                 const role = row.role;
 
                 // print the results of the current row
-                console.log(util.format("| %d | %s | %s | %s |", id, firstname, lastname, role));
+                console.log(format("| %d | %s | %s |", id, name, role));
 
                 const employeeForCurrentRow = {
                     id: id,
-                    firstname: firstname,
-                    lastname: lastname,
+                    name: name,
                     role: role
                 };
 
-                // add a new element sampleForCurrentRow to the array
                 listOfEmployees.push(employeeForCurrentRow);
             };
 
@@ -76,23 +72,21 @@ function getAllEmployees()
 function createNewEmployee(createdEmployee){
     return new Promise(function (resolve, reject) {
         const sql = `
-          INSERT INTO employees (firstname, lastname, role)
-          VALUES (?, ?, ?);
+          INSERT INTO employees (name, role)
+          VALUES (?, ?);
       `;
 
         const {
-            firstname,
-            lastname,
+            name,
             role
         } = createdEmployee;
 
-        db.run(sql, [firstname, lastname, role], function (err) {
+        db.run(sql, [name, role], function (err) {
             if (err) {
                 reject(err);
             } else {
                 resolve({
-                    firstname,
-                    lastname,
+                    name,
                     role
                 });
             }

@@ -11,7 +11,7 @@ const db = require("./../db");
  */
 router.get("/employees", async (req, res) => {
     try {
-        const assignees = await db.getAllEmployees();  // <- this function
+        const employees = await db.getAllEmployees();  // <- this function
         res.status(200).json(employees);
     } catch (err) {
         console.error(err);
@@ -34,23 +34,16 @@ router.get("/employees", async (req, res) => {
 router.post("/employees", async function (req, res) {
     try {
         // Extract the assignee data from the request body
-        const firstname = req.body.firstname;
-        const lastname = req.body.lastname;
+        const name = req.body.name;
         const role = req.body.role;
 
         // Logging the received parameters
-        console.log("firstname   = " + firstname);
-        console.log("lastname    = " + lastname);
-        console.log("role        = " + role)
+        console.log("name   = " + name);
+        console.log("role   = " + role)
 
         // Validate that required parameters are provided
-        if (firstname === undefined) {
-            res.status(400).json({"error": "bad request: expected parameter 'firstname' is not defined"});
-            return;
-        }
-
-        if (lastname === undefined) {
-            res.status(400).json({"error": "bad request: expected parameter 'lastname' is not defined"});
+        if (name === undefined) {
+            res.status(400).json({"error": "bad request: expected parameter 'name' is not defined"});
             return;
         }
 
@@ -62,8 +55,7 @@ router.post("/employees", async function (req, res) {
         // Create the assignee object that will be inserted into the database
         let createdEmployee = {
             id: null,  // Will be initialized by the database after the insert
-            firstname: firstname,
-            lastname: lastname,
+            name: name,
             role: role
         };
 
