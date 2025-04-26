@@ -86,26 +86,20 @@ app.get('/api/employees', async (req, res, next) => {
      });
 
 // Get a specific employee
-app.get('/api/employees/:id', (req, res) => {
-    /*const id = parseInt(req.params.id);
-    const employee = employees.find(emp => emp.id === id);
-
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-    }
-
-    res.json(employee);*/
-
+app.get('/api/employees/:id', async (req, res, next) => {
     const id = parseInt(req.params.id);
 
-    res.json(
-        db.getEmployee(id)
-    );
+    try {
+        const list = await db.getEmployee(id);
+        res.json(list);
+    } catch (err) {
+        next(err);
+    }
 });
 
 // Create a new employee
-app.post('/api/employees', (req, res) => {
-    const newEmployee = {
+app.post('/api/employees', async (req, res) => {
+    /*const newEmployee = {
         id: employees.length > 0 ? Math.max(...employees.map(emp => emp.id)) + 1 : 1,
         name: req.body.name,
         availability: req.body.availability || {},
@@ -117,7 +111,39 @@ app.post('/api/employees', (req, res) => {
     };
 
     employees.push(newEmployee);
-    res.status(201).json(newEmployee);
+    res.status(201).json(newEmployee);*/
+    try {
+        const name = req.body.name;
+        const role = req.body.role;
+
+        console.log("name    = " + name);
+        console.log("role    = " + role);
+
+        if (name === undefined) {
+            res.status(400).json({"error": "bad request: expected parameter 'name' is not defined"});
+            return;
+        }
+
+        if (role === undefined) {
+            res.status(400).json({"error": "bad request: expected parameter 'role' is not defined"});
+            return;
+        }
+
+        let createdEmployee = {
+            id: null,  // Will be initialized by the database after the insert
+            name: name,
+            role: role
+        };
+
+        // Insert the new assignee into the database
+        createdEmployee = await db.createNewEmployee(createdEmployee);
+
+        // Return the newly created assignee with a 201 status code
+        res.status(201).json(createdEmployee);
+    } catch (err) {
+        console.error("Error:", err.message);
+        res.status(422).json({"error": "failed to add new employee to the database"});
+    }
 });
 
 // Update an employee
@@ -178,3 +204,11 @@ app.listen(port, () => {
 
 // Additional packages you'll need to install:
 // npm install express cors body-parser
+app.get('/api/employees/:id/availability', async (req, res, next) => {
+    try {
+        const data = await db.getEmployeeAvailability(parseInt(req.params.id));
+        res.json(data);
+    } catch (err) {
+        next(err);
+    }
+});

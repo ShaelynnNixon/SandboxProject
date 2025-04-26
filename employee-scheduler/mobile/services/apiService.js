@@ -151,3 +151,21 @@ export const updateStoreSettings = async (settings) => {
     throw error;
   }
 };
+
+/**
+ * Fetch availability for a specific employee
+ * @param {number} id
+ * @returns {Promise<Array>} Promise resolving to availability records
+ */
+export const getEmployeeAvailability = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/employees/${id}/availability`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching availability for employee ${id}:`, error);
+    throw error;
+  }
+};
