@@ -13,27 +13,27 @@ function isWithin(time, start, end) {
 
 function logScheduleData(shift, employee, wasScheduled) {
     const query = `
-    INSERT INTO historical_schedules (
-      date,
-      shift_start,
-      shift_end,
-      employee_id,
-      employee_availability,
-      employee_role,
-      total_hours_assigned,
-      business_need_role,
-      business_need_count,
-      was_scheduled
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO historical_schedules (
+            date,
+            shift_start,
+            shift_end,
+            employee_id,
+            employee_availability,
+            employee_role,
+            total_hours_assigned,
+            business_need_role,
+            business_need_count,
+            was_scheduled
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
-        shift.date,
-        shift.startTime,
-        shift.endTime,
+        shift.date || new Date().toISOString().split('T')[0],   // Fallback to today if date is missing
+        shift.startTime || "00:00",                              // Default times if missing
+        shift.endTime || "00:00",
         employee.id,
-        JSON.stringify(employee.availability || {}),
-        employee.role || 'N/A',
+        JSON.stringify(employee.availability || {}),             // Store availability cleanly
+        employee.role || 'Unknown',
         employee.totalHoursAssigned || 0,
         shift.requiredRole || 'General',
         shift.requiredCount || 1,
@@ -43,6 +43,7 @@ function logScheduleData(shift, employee, wasScheduled) {
     db.run(query, values, function(err) {
         if (err) {
             console.error('Error inserting into historical_schedules:', err);
+            console.error('Values:', values);  // Debugging
         }
     });
 }
