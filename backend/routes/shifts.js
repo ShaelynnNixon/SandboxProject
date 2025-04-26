@@ -5,7 +5,7 @@ const db = require("./../db");
 
 /**
  * http://localhost:3000/shifts
- * GET /availability/shifts
+ * GET /shifts
  *
  * @return a list of shifts as JSON
  */
