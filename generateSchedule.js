@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./db.sqlite');  // Correct database name
+const db = new sqlite3.Database('./db.sqlite');  // Make sure this matches your actual DB
 
 function timeToNumber(timeStr) {
     const [h, m] = timeStr.split(':').map(Number);
@@ -11,31 +11,24 @@ function isWithin(time, start, end) {
     return t >= timeToNumber(start) && t < timeToNumber(end);
 }
 
+
 function getSchedule(callback) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const schedule = {};
 
     db.serialize(() => {
-        db.all(`SELECT *
-                FROM employees`, (err, employees) => {
-            db.all(`SELECT *
-                    FROM availability`, (err, availability) => {
-                db.all(`SELECT *
-                        FROM store_needs`, (err, storeNeeds) => {
-                    if (err) {
-                        console.error("Error fetching store_needs:", err);
-                        return;
-                    }
+        db.all(`SELECT * FROM employees`, (err, employees) => {
+            if (err) return console.error("Error fetching employees:", err);
 
-                    console.log("storeNeeds data:", storeNeeds);  // Debugging line
+            db.all(`SELECT * FROM availability`, (err, availability) => {
+                if (err) return console.error("Error fetching availability:", err);
 
-                    // Check if storeNeeds is empty
-                    if (!storeNeeds || storeNeeds.length === 0) {
-                        console.error("No store needs data found!");
-                        return;
-                    }
+                db.all(`SELECT * FROM store_needs`, (err, storeNeeds) => {
+                    if (err) return console.error("Error fetching store_needs:", err);
 
-                    // Continue if we have store needs data
+                    // Debug line: optional
+                    // console.log("storeNeeds data:", storeNeeds);
+
                     for (const day of days) {
                         schedule[day] = {};
                         const dayNeeds = storeNeeds.filter(n => n.day_of_week === day);
@@ -53,21 +46,18 @@ function getSchedule(callback) {
                                 return !!empAvail;
                             });
 
-                            // Fill shifts up to needed_employees
                             for (let i = 0; i < need.needed_employees && i < availableEmps.length; i++) {
-                                schedule[day][hour].push(availableEmps[i].name);
-
-                                // Insert shift into schedule_shifts table
                                 const employee = availableEmps[i];
-                                const shiftDate = `${new Date().getFullYear()}-04-${dayNeeds[0].hour.split(":")[0]}`; // Make shift date based on current year and day/hour
+                                schedule[day][hour].push(employee.name);
+
+                                // Optional: clean up date generation if needed
+                                const shiftDate = `${new Date().getFullYear()}-04-${String(i + 1).padStart(2, '0')}`;
                                 db.run(
                                     `INSERT INTO schedule_shifts (employee_id, shift_date, start_time, end_time)
                                      VALUES (?, ?, ?, ?)`,
-                                    [employee.id, shiftDate, hour, hour],  // Simplified: using same start and end time for now
-                                    function (err) {
-                                        if (err) {
-                                            console.error('Error inserting shift:', err);
-                                        }
+                                    [employee.id, shiftDate, hour, hour],
+                                    err => {
+                                        if (err) console.error('Error inserting shift:', err);
                                     }
                                 );
                             }
@@ -82,11 +72,25 @@ function getSchedule(callback) {
 }
 
 getSchedule(schedule => {
-    for (const day in schedule) {
+    console.log("Schedule data:", schedule);  // Debugging line
+
+    for (const day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']) {
         console.log(`\n--- ${day} ---`);
-        for (const hour in schedule[day]) {
-            console.log(`${hour}: ${schedule[day][hour].join(', ') || 'Unfilled'}`);
+
+        if (!schedule[day] || Object.keys(schedule[day]).length === 0) {
+            console.log("No shifts scheduled.");
+        } else {
+            const hours = Object.keys(schedule[day]).sort();
+            for (const hour of hours) {
+                const employees = schedule[day][hour];
+                if (employees && employees.length > 0) {
+                    console.log(`${hour}: ${employees.join(', ')}`);
+                } else {
+                    console.log(`${hour}: Unfilled`);
+                }
+            }
         }
     }
+
     db.close();
 });
