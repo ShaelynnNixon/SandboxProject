@@ -34,16 +34,16 @@ function scheduleWeeklyShifts(employees, storeNeeds) {
 // THIS WILL BE REPLACED WITH DATA FROM EMPLOYEE TABLE
 const employees = {
     Alice: {
-        Monday: ["09:00", "10:00"],
-        Tuesday: ["10:00"]
+        Monday: { start: "09:00", end: "13:00" },
+        Tuesday: { start: "10:00", end: "14:00" }
     },
     Bob: {
-        Monday: ["10:00"],
-        Tuesday: ["10:00", "11:00"]
+        Monday: { start: "10:00", end: "15:00" },
+        Wednesday: { start: "09:00", end: "12:00" }
     },
     Charlie: {
-        Monday: ["09:00", "11:00"],
-        Tuesday: ["11:00"]
+        Monday: { start: "08:00", end: "11:00" },
+        Tuesday: { start: "12:00", end: "16:00" }
     }
 };
 
