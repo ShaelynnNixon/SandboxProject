@@ -208,10 +208,61 @@ function getShifts()
     });
 }
 
+function getStoreNeeds()
+{
+    return new Promise(function(resolve, reject)
+    {
+        db.serialize(function()
+        {
+            const sql =
+                `SELECT id, day_of_week, hour, needed_employees
+                 FROM store_needs;`;
+
+            let storeNeeds = [];
+
+            printTableHeader(["id", "day_of_week", "hour", "needed_employees"]);
+
+            const callbackToProcessEachRow = function(err, row)
+            {
+                if (err)
+                {
+                    reject(err);
+                }
+
+                // extract the values from the current row
+                const id = row.id;
+                const day_of_week = row.day_of_week;
+                const hour = row.hour;
+                const needed_employees = row.needed_employees;
+
+                // print the results of the current row
+                console.log(format("| %d | %s | %s | %s |", id, day_of_week, hour, needed_employees));
+
+                const storeNeedsForCurrentRow = {
+                    id: id,
+                    day_of_week: day_of_week,
+                    hour: hour,
+                    needed_employees: needed_employees
+                };
+
+                storeNeeds.push(storeNeedsForCurrentRow);
+            };
+
+            const callbackAfterAllRowsAreProcessed = function()
+            {
+                resolve(storeNeeds);
+            };
+
+            db.each(sql, callbackToProcessEachRow, callbackAfterAllRowsAreProcessed);
+        });
+    });
+}
+
 // these functions will be available from other files that import this module
 module.exports = {
     getAllEmployees,
     createNewEmployee,
     getEmployeeAvailability,
-    getShifts
+    getShifts,
+    getStoreNeeds
 };

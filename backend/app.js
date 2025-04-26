@@ -26,5 +26,6 @@ app.get('/', function (req, res)
 app.use('/', require('./routes/employees'));
 app.use('/', require('./routes/availability'));
 app.use('/', require('./routes/shifts'));
+app.use('/', require('./routes/store_needs'));
 
 module.exports = app;
