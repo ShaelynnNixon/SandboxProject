@@ -225,3 +225,59 @@ app.get('/api/employees/:id/availability', async (req, res, next) => {
         next(err);
     }
 });
+
+app.post('/api/employees/:id/availability', async (req, res, next) => {
+    try {
+        const employee_id = parseInt(req.params.id);
+        const { day_of_week, start_time, end_time } = req.body;
+
+        // Validate employee exists
+        const employees = await db.getEmployee(employee_id);
+        if (!employees || employees.length === 0) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        // Validate input
+        if (!day_of_week || !start_time || !end_time) {
+            return res.status(400).json({
+                message: 'Missing required fields. Day, start time, and end time are required.'
+            });
+        }
+
+        // Validate day_of_week is one of the allowed values
+        const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        if (!validDays.includes(day_of_week)) {
+            return res.status(400).json({
+                message: `Invalid day_of_week. Must be one of: ${validDays.join(', ')}`
+            });
+        }
+
+        // Validate time format (HH:MM)
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(start_time) || !timeRegex.test(end_time)) {
+            return res.status(400).json({
+                message: "Invalid time format. Must be in HH:MM format"
+            });
+        }
+
+        // Create availability object
+        const availability = {
+            employee_id,
+            day_of_week,
+            start_time,
+            end_time
+        };
+
+        // Add availability to database
+        const result = await db.addEmployeeAvailability(availability);
+
+        // Return the created availability
+        res.status(201).json(result);
+    } catch (err) {
+        console.error('Error adding availability:', err);
+        res.status(500).json({
+            message: 'Failed to add availability',
+            error: err.message
+        });
+    }
+});

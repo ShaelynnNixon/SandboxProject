@@ -169,3 +169,30 @@ export const getEmployeeAvailability = async (id) => {
     throw error;
   }
 };
+
+/**
+ * Add availability for an employee
+ * @param {number} employeeId - Employee ID
+ * @param {Object} availability - Availability data
+ * @returns {Promise<Object>} Promise resolving to created availability
+ */
+export const addEmployeeAvailability = async (employeeId, availability) => {
+  try {
+    const response = await fetch(`${API_URL}/employees/${employeeId}/availability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(availability),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error adding availability for employee ${employeeId}:`, error);
+    throw error;
+  }
+};

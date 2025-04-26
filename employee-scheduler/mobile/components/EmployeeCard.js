@@ -3,11 +3,11 @@ import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } fr
 import { getEmployeeAvailability } from '../services/apiService';
 
 const EmployeeCard = ({ employee, onPress, onDelete }) => {
-  const [availability, setAvailability] = useState(null);
+  const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load availability if the component is mounted
+    // Load availability when component mounts
     loadAvailability();
   }, []);
 
@@ -48,12 +48,10 @@ const EmployeeCard = ({ employee, onPress, onDelete }) => {
           </Text>
           {loading ? (
               <ActivityIndicator size="small" color="#4CAF50" />
-          ) : availability ? (
+          ) : (
               <Text style={styles.detail}>
                 Available: {availability.length} days
               </Text>
-          ) : (
-              <Text style={styles.detail}>No availability set</Text>
           )}
         </View>
         <TouchableOpacity

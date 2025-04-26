@@ -94,18 +94,18 @@ export default function App() {
   const handleAddAvailability = async (availability) => {
     setLoading(true);
     try {
-      // Instead of just showing an alert, log the data that would be submitted
-      console.log('Submitting availability:', availability);
+      // Call the API to add availability
+      await api.addEmployeeAvailability(selectedEmployee.id, availability);
 
-      // You would typically call an API function here like:
-      // await api.addEmployeeAvailability(selectedEmployee.id, availability);
+      // Refresh the employee's availability data
+      const updatedAvailability = await api.getEmployeeAvailability(selectedEmployee.id);
+      setSelectedAvailability(updatedAvailability);
 
-      // For now, let's simulate success
       Alert.alert('Success', 'Availability added successfully');
 
-      // Close the modal and return to employee list
+      // Close the availability modal and show the employee modal again
       setAvailabilityModalVisible(false);
-      setCurrentView('employees');
+      setModalVisible(true);
     } catch (error) {
       Alert.alert('Error', `Failed to add availability: ${error.message}`);
       console.error('Error adding availability:', error);
@@ -285,53 +285,20 @@ export default function App() {
             visible={availabilityModalVisible}
             onRequestClose={() => {
               setAvailabilityModalVisible(false);
+              setModalVisible(true);
             }}
         >
           <View style={styles.modalContainer}>
-            <View style={[styles.modalContent, { height: 400 }]}>
-              <View style={styles.headerRow}>
-                <Text style={styles.sectionTitle}>Add Availability for {selectedEmployee.name}</Text>
-                <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
-                      setAvailabilityModalVisible(false);
-                      setModalVisible(true);
-                    }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Day of Week</Text>
-                <View style={styles.input}>
-                  <Text>Monday</Text>
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Start Time</Text>
-                <View style={styles.input}>
-                  <Text>09:00</Text>
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>End Time</Text>
-                <View style={styles.input}>
-                  <Text>17:00</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={() => {
-                    Alert.alert('Success', 'Availability added (simulation)');
+            <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+              <AvailabilityForm
+                  employeeId={selectedEmployee.id}
+                  onSubmit={handleAddAvailability}
+                  onCancel={() => {
                     setAvailabilityModalVisible(false);
+                    setModalVisible(true);
                   }}
-              >
-                <Text style={styles.submitButtonText}>Save Availability</Text>
-              </TouchableOpacity>
+                  loading={loading}
+              />
             </View>
           </View>
         </Modal>

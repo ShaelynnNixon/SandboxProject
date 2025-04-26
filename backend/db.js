@@ -317,6 +317,57 @@ function getStoreNeeds()
         });
     });
 }
+function addEmployeeAvailability(availability) {
+    return new Promise(function(resolve, reject) {
+        const sql = `
+            INSERT INTO availability (employee_id, day_of_week, start_time, end_time)
+            VALUES (?, ?, ?, ?);
+        `;
+
+        const {
+            employee_id,
+            day_of_week,
+            start_time,
+            end_time
+        } = availability;
+
+        // Validate input
+        if (!employee_id || !day_of_week || !start_time || !end_time) {
+            reject(new Error("Missing required fields for availability"));
+            return;
+        }
+
+        // Validate day_of_week is one of the allowed values
+        const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        if (!validDays.includes(day_of_week)) {
+            reject(new Error(`Invalid day_of_week. Must be one of: ${validDays.join(', ')}`));
+            return;
+        }
+
+        // Validate time format (HH:MM)
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(start_time) || !timeRegex.test(end_time)) {
+            reject(new Error("Invalid time format. Must be in HH:MM format"));
+            return;
+        }
+
+        db.run(sql, [employee_id, day_of_week, start_time, end_time], function(err) {
+            if (err) {
+                console.error("Error in addEmployeeAvailability:", err.message);
+                reject(err);
+            } else {
+                // Return the created availability with its ID
+                resolve({
+                    id: this.lastID,
+                    employee_id,
+                    day_of_week,
+                    start_time,
+                    end_time
+                });
+            }
+        });
+    });
+}
 
 // these functions will be available from other files that import this module
 module.exports = {
@@ -326,6 +377,7 @@ module.exports = {
     updateEmployee,
     deleteEmployeeById,
     getEmployeeAvailability,
+    addEmployeeAvailability,
     getShifts,
     getStoreNeeds
 };
