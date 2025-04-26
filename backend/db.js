@@ -81,51 +81,18 @@ function getAllEmployees()
     });
 }
 
-function getEmployee(employee_id)
-{
-    return new Promise(function(resolve, reject)
-    {
-        db.serialize(function()
-        {
-            const sql =
-                `SELECT id, name, role
-                 FROM employees
-                 WHERE id = ${employee_id};`;
+function getEmployee(id) {
+    return new Promise(function (resolve, reject) {
+        const sql = `SELECT * FROM employees WHERE id = ?;`;
 
-            let listOfEmployees = [];
-
-            printTableHeader(["id", "name", "role"]);
-
-            const callbackToProcessEachRow = function(err, row)
-            {
-                if (err)
-                {
-                    reject(err);
-                }
-
-                // extract the values from the current row
-                const id = row.id;
-                const name = row.name;
-                const role = row.role;
-
-                // print the results of the current row
-                console.log(format("| %d | %s | %s |", id, name, role));
-
-                const employeeForCurrentRow = {
-                    id: id,
-                    name: name,
-                    role: role
-                };
-
-                listOfEmployees.push(employeeForCurrentRow);
-            };
-
-            const callbackAfterAllRowsAreProcessed = function()
-            {
-                resolve(listOfEmployees);
-            };
-
-            db.each(sql, callbackToProcessEachRow, callbackAfterAllRowsAreProcessed);
+        db.get(sql, [id], function (err, row) {
+            if (err) {
+                reject(err);
+            } else if (!row){
+                resolve({success: false, message: `No employee found with id: ${id}`});
+            } else {
+                resolve({success: true, employee: row});
+            }
         });
     });
 }
@@ -155,6 +122,50 @@ function createNewEmployee(createdEmployee){
     });
 }
 
+function deleteEmployeeById(id) {
+    return new Promise(function (resolve, reject) {
+        const sql = `DELETE
+                     FROM employees
+                     WHERE id = ?;`;
+
+        db.run(sql, [id], function (err) {
+            if (err) {
+                reject(err);
+            } else if (this.changes === 0) {
+                // No rows deleted — ID not found
+                resolve({success: false, message: `No employee found with id: ${id}`});
+            } else {
+                resolve({success: true, message: `Employee ${id} deleted.`});
+            }
+        });
+    });
+}
+
+function updateEmployee(employeeToUpdate) {
+    return new Promise(function (resolve, reject) {
+        const { id, name, role } = employeeToUpdate;
+
+        if (!id) {
+            return reject(new Error("Missing required fields"));
+        }
+
+        const sql = `
+            UPDATE employees
+            SET name = ?, role = ?
+            WHERE id = ?;
+        `;
+
+        db.run(sql, [name, role, id], function (err) {
+            if (err) {
+                reject(err);
+            } else if (this.changes === 0) {
+                resolve({ success: false, message: `No employee found with id: ${id}` });
+            } else {
+                resolve({ success: true, message: `Employee ${id} updated.` });
+            }
+        });
+    });
+}
 
 function getEmployeeAvailability(employee_id)
 {
@@ -312,6 +323,8 @@ module.exports = {
     getAllEmployees,
     getEmployee,
     createNewEmployee,
+    updateEmployee,
+    deleteEmployeeById,
     getEmployeeAvailability,
     getShifts,
     getStoreNeeds

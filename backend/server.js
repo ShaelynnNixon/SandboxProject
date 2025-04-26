@@ -147,36 +147,49 @@ app.post('/api/employees', async (req, res) => {
 });
 
 // Update an employee
-app.put('/api/employees/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const index = employees.findIndex(emp => emp.id === id);
+app.put('/api/employees/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Use default empty strings for missing fields, so that destructuring won't fail
+        const {name = null, role = null} = req.body;
 
-    if (index === -1) {
-        return res.status(404).json({ message: 'Employee not found' });
+        console.log("id    = " + id);
+        console.log("name  = " + name);
+        console.log("role  = " + role);
+
+        const result = await db.getEmployee(id);
+
+        if (!result.success) {
+            console.log("No employee with id " + id + " exists.");
+            res.status(404).json({"error": "Employee not found"});
+            return;
+        }
+        let employeeToUpdate = result.employee;
+
+        // Update only the fields that are provided in the request
+        if (name !== null) employeeToUpdate.name = name;
+        if (role !== null) employeeToUpdate.role = role;
+
+        await db.updateEmployee(employeeToUpdate);
+        res.json(employeeToUpdate);
+
+    } catch (err) {
+        console.error("Error:", err.message);
+        res.status(422).json({"error": "failed to update the employee with id = " + req.params.id});
     }
-
-    const updatedEmployee = {
-        id: id,
-        name: req.body.name || employees[index].name,
-        availability: req.body.availability || employees[index].availability,
-        hourPreferences: req.body.hourPreferences || employees[index].hourPreferences
-    };
-
-    employees[index] = updatedEmployee;
-    res.json(updatedEmployee);
 });
 
 // Delete an employee
-app.delete('/api/employees/:id', (req, res) => {
+app.delete('/api/employees/:id', async (req, res) => {
     const id = parseInt(req.params.id);
-    const index = employees.findIndex(emp => emp.id === id);
 
-    if (index === -1) {
-        return res.status(404).json({ message: 'Employee not found' });
+    try {
+        const list = await db.deleteEmployeeById(id);
+        res.json(list);
+    } catch (err) {
+        next(err);
     }
 
-    employees.splice(index, 1);
-    res.status(204).send();
 });
 
 // Get store settings
