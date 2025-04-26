@@ -204,3 +204,11 @@ app.listen(port, () => {
 
 // Additional packages you'll need to install:
 // npm install express cors body-parser
+app.get('/api/employees/:id/availability', async (req, res, next) => {
+    try {
+        const data = await db.getEmployeeAvailability(parseInt(req.params.id));
+        res.json(data);
+    } catch (err) {
+        next(err);
+    }
+});
