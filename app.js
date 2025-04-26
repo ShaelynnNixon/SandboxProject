@@ -21,10 +21,10 @@ app.get('/', function (req, res)
 })
 
 // Add new route directories here
-app.use('/', require('../backend/routes/employees'));
-app.use('/', require('../backend/routes/availability'));
-app.use('/', require('../backend/routes/shifts'));
-app.use('/', require('../backend/routes/schedule_shifts'));
-app.use('/', require('../backend/routes/store_needs'));
+app.use('/', require('./backend/routes/employees'));
+app.use('/', require('./backend/routes/availability'));
+app.use('/', require('./backend/routes/shifts'));
+//app.use('/', require('./backend/routes/schedule_shifts'));
+app.use('/', require('./backend/routes/store_needs'));
 
 module.exports = app;
