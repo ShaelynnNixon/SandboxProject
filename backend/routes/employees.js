@@ -4,7 +4,7 @@ const db = require("./../db");
 
 
 /**
- * http://localhost:8080/employees
+ * http://localhost:3000/employees
  * GET /employees
  *
  * @return a list of employees as JSON
