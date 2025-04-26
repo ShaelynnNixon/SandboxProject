@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const db = "../../backend/db.js";
-const app = express();
+const db = "../backend/db.js";
+const app = require('./app');
 const port = 3000;
 
 // Sample data - in a real app, this would be in a database
@@ -76,6 +76,8 @@ app.get('/', (req, res) => {
 
 // Get all employees
 app.get('/api/employees', (req, res) => {
+    //res.json(employees);
+
     res.json(
         db.getAllEmployees()
     );
@@ -83,14 +85,20 @@ app.get('/api/employees', (req, res) => {
 
 // Get a specific employee
 app.get('/api/employees/:id', (req, res) => {
-    const id = parseInt(req.params.id);
+    /*const id = parseInt(req.params.id);
     const employee = employees.find(emp => emp.id === id);
 
     if (!employee) {
         return res.status(404).json({ message: 'Employee not found' });
     }
 
-    res.json(employee);
+    res.json(employee);*/
+
+    const id = parseInt(req.params.id);
+
+    res.json(
+        db.getEmployee(id)
+    );
 });
 
 // Create a new employee
