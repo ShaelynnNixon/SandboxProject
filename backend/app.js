@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // CORS allows requests from any origin (e.g., from the front-end)
 app.use(cors());
 
-// Called for GET request at http://localhost:8080/
+// Called for GET request at http://localhost:3000/
 app.get('/', function (req, res)
 {
     console.log('GET / called');
@@ -25,5 +25,6 @@ app.get('/', function (req, res)
 // Add new route directories here
 app.use('/', require('./routes/employees'));
 app.use('/', require('./routes/availability'));
+app.use('/', require('./routes/shifts'));
 
 module.exports = app;

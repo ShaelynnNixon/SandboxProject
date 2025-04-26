@@ -156,9 +156,62 @@ function getEmployeeAvailability(employee_id)
     });
 }
 
+function getShifts()
+{
+    return new Promise(function(resolve, reject)
+    {
+        db.serialize(function()
+        {
+            const sql =
+                `SELECT id, employee_id, shift_date, start_time, end_time
+                 FROM shifts;`;
+
+            let listOfShifts = [];
+
+            printTableHeader(["id", "employee_id", "shift_date", "start_time", "end_time"]);
+
+            const callbackToProcessEachRow = function(err, row)
+            {
+                if (err)
+                {
+                    reject(err);
+                }
+
+                // extract the values from the current row
+                const id = row.id;
+                const employee_id = row.employee_id;
+                const shift_date = row.shift_date;
+                const start_time = row.start_time;
+                const end_time = row.end_time;
+
+                // print the results of the current row
+                console.log(format("| %d | %s | %s | %s | %s |", id, employee_id, shift_date, start_time, end_time));
+
+                const shiftForCurrentRow = {
+                    id: id,
+                    employee_id: employee_id,
+                    shift_date: shift_date,
+                    start_time: start_time,
+                    end_time: end_time
+                };
+
+                listOfShifts.push(shiftForCurrentRow);
+            };
+
+            const callbackAfterAllRowsAreProcessed = function()
+            {
+                resolve(listOfShifts);
+            };
+
+            db.each(sql, callbackToProcessEachRow, callbackAfterAllRowsAreProcessed);
+        });
+    });
+}
+
 // these functions will be available from other files that import this module
 module.exports = {
     getAllEmployees,
     createNewEmployee,
-    getEmployeeAvailability
+    getEmployeeAvailability,
+    getShifts
 };
