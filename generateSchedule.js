@@ -16,9 +16,12 @@ function getSchedule(callback) {
     const schedule = {};
 
     db.serialize(() => {
-        db.all(`SELECT * FROM employees`, (err, employees) => {
-            db.all(`SELECT * FROM availability`, (err, availability) => {
-                db.all(`SELECT * FROM store_needs`, (err, storeNeeds) => {
+        db.all(`SELECT *
+                FROM employees`, (err, employees) => {
+            db.all(`SELECT *
+                    FROM availability`, (err, availability) => {
+                db.all(`SELECT *
+                        FROM store_needs`, (err, storeNeeds) => {
                     if (err) {
                         console.error("Error fetching store_needs:", err);
                         return;
@@ -58,7 +61,8 @@ function getSchedule(callback) {
                                 const employee = availableEmps[i];
                                 const shiftDate = `${new Date().getFullYear()}-04-${dayNeeds[0].hour.split(":")[0]}`; // Make shift date based on current year and day/hour
                                 db.run(
-                                    `INSERT INTO schedule_shifts (employee_id, shift_date, start_time, end_time) VALUES (?, ?, ?, ?)`,
+                                    `INSERT INTO schedule_shifts (employee_id, shift_date, start_time, end_time)
+                                     VALUES (?, ?, ?, ?)`,
                                     [employee.id, shiftDate, hour, hour],  // Simplified: using same start and end time for now
                                     function (err) {
                                         if (err) {
