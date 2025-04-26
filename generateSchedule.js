@@ -11,7 +11,7 @@ function isWithin(time, start, end) {
     return t >= timeToNumber(start) && t < timeToNumber(end);
 }
 
-
+//get schedules
 function getSchedule(callback) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const schedule = {};
