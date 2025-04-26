@@ -37,3 +37,12 @@ CREATE TABLE shifts (
                         end_time TEXT NOT NULL,
                         FOREIGN KEY (employee_id) REFERENCES employees(id)
 );
+
+CREATE TABLE schedule_shifts (
+                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 employee_id INTEGER NOT NULL,
+                                 shift_date TEXT NOT NULL, -- Format: 'YYYY-MM-DD'
+                                 start_time TEXT NOT NULL,
+                                 end_time TEXT NOT NULL,
+                                 FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
