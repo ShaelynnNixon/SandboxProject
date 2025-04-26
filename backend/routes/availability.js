@@ -17,7 +17,7 @@ router.get(`/availability/:id`, async (req, res) => {
         res.status(200).json(availability);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to get employees" });
+        res.status(500).json({ error: "Failed to get availability" });
     }
 });
 
