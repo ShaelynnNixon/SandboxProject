@@ -21,6 +21,18 @@ db = new sqlite3.Database("./" + SQLITE_FILE_NAME, function(err)
 });
 
 
+function printTableHeader(listOfColumnNames)
+{
+    let buffer = "| ";
+    for (const columnName of listOfColumnNames)
+    {
+        buffer += columnName + " | ";
+    }
+    console.log(buffer);
+    console.log("-".repeat(80));
+}
+
+
 function getAllEmployees()
 {
     return new Promise(function(resolve, reject)
@@ -94,19 +106,59 @@ function createNewEmployee(createdEmployee){
     });
 }
 
-function printTableHeader(listOfColumnNames)
+
+function getEmployeeAvailability(employee_id)
 {
-    let buffer = "| ";
-    for (const columnName of listOfColumnNames)
+    return new Promise(function(resolve, reject)
     {
-        buffer += columnName + " | ";
-    }
-    console.log(buffer);
-    console.log("-".repeat(80));
+        db.serialize(function()
+        {
+            const sql =
+                `SELECT day_of_week, start_time, end_time
+                 FROM availability
+                 WHERE employee_id = ${employee_id};`;
+
+            let availability = [];
+
+            printTableHeader(["day_of_week", "start_time, end_time"]);
+
+            const callbackToProcessEachRow = function(err, row)
+            {
+                if (err)
+                {
+                    reject(err);
+                }
+
+                // extract the values from the current row
+                const day_of_week = row.day_of_week;
+                const start_time = row.start_time;
+                const end_time = row.end_time;
+
+                // print the results of the current row
+                console.log(format("| %s | %s | %s |", day_of_week, start_time, end_time));
+
+                const availabilityForCurrentRow = {
+                    day_of_week: day_of_week,
+                    start_time: start_time,
+                    end_time: end_time
+                };
+
+                availability.push(availabilityForCurrentRow);
+            };
+
+            const callbackAfterAllRowsAreProcessed = function()
+            {
+                resolve(availability);
+            };
+
+            db.each(sql, callbackToProcessEachRow, callbackAfterAllRowsAreProcessed);
+        });
+    });
 }
 
 // these functions will be available from other files that import this module
 module.exports = {
     getAllEmployees,
-    createNewEmployee
+    createNewEmployee,
+    getEmployeeAvailability
 };

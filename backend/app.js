@@ -24,5 +24,6 @@ app.get('/', function (req, res)
 
 // Add new route directories here
 app.use('/', require('./routes/employees'));
+app.use('/', require('./routes/availability'));
 
 module.exports = app;
