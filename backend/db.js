@@ -1,5 +1,3 @@
-const util = require("util");
-const fs = require("fs");
 const sqlite3 = require('sqlite3').verbose();
 
 // Do not change this name. The 'cs208_project.sqlite' will be created in the same folder as db.js
@@ -100,6 +98,17 @@ function createNewEmployee(createdEmployee){
             }
         });
     });
+}
+
+function printTableHeader(listOfColumnNames)
+{
+    let buffer = "| ";
+    for (const columnName of listOfColumnNames)
+    {
+        buffer += columnName + " | ";
+    }
+    console.log(buffer);
+    console.log("-".repeat(80));
 }
 
 // these functions will be available from other files that import this module
