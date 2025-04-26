@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS store_needs;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS schedule_shifts;
+DROP TABLE IF EXISTS historical_schedules;
 
 CREATE TABLE employees
 (
@@ -55,4 +56,18 @@ CREATE TABLE schedule_shifts
     start_time  TEXT    NOT NULL,
     end_time    TEXT    NOT NULL,
     FOREIGN KEY (employee_id) REFERENCES employees (id)
+);
+
+CREATE TABLE historical_schedules (
+                                      id SERIAL PRIMARY KEY,
+                                      date DATE,
+                                      shift_start TIME,
+                                      shift_end TIME,
+                                      employee_id INT,
+                                      employee_availability TEXT,
+                                      employee_role TEXT,
+                                      total_hours_assigned INT,
+                                      business_need_role TEXT,
+                                      business_need_count INT,
+                                      was_scheduled BOOLEAN
 );

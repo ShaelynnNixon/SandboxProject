@@ -11,6 +11,42 @@ function isWithin(time, start, end) {
     return t >= timeToNumber(start) && t < timeToNumber(end);
 }
 
+function logScheduleData(shift, employee, wasScheduled) {
+    const query = `
+    INSERT INTO historical_schedules (
+      date,
+      shift_start,
+      shift_end,
+      employee_id,
+      employee_availability,
+      employee_role,
+      total_hours_assigned,
+      business_need_role,
+      business_need_count,
+      was_scheduled
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+        shift.date,
+        shift.startTime,
+        shift.endTime,
+        employee.id,
+        JSON.stringify(employee.availability || {}),
+        employee.role || 'N/A',
+        employee.totalHoursAssigned || 0,
+        shift.requiredRole || 'General',
+        shift.requiredCount || 1,
+        wasScheduled ? 1 : 0
+    ];
+
+    db.run(query, values, function(err) {
+        if (err) {
+            console.error('Error inserting into historical_schedules:', err);
+        }
+    });
+}
+
 //get schedules
 function getSchedule(callback) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -60,6 +96,26 @@ function getSchedule(callback) {
                                         if (err) console.error('Error inserting shift:', err);
                                     }
                                 );
+
+                                availableEmps.slice(need.needed_employees).forEach(employee => {
+                                    const shift = {
+                                        date: shiftDate,
+                                        startTime: hour,
+                                        endTime: hour,
+                                        requiredRole: need.role || 'General',
+                                        requiredCount: need.needed_employees
+                                    };
+                                    logScheduleData(shift, employee, false);
+                                });
+
+                                const shift = {
+                                    date: shiftDate,
+                                    startTime: hour,
+                                    endTime: hour,
+                                    requiredRole: need.role || 'General',
+                                    requiredCount: need.needed_employees
+                                };
+                                logScheduleData(shift, employee, true);
                             }
                         }
                     }
@@ -94,3 +150,4 @@ getSchedule(schedule => {
 
     db.close();
 });
+
