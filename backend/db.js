@@ -81,6 +81,55 @@ function getAllEmployees()
     });
 }
 
+function getEmployee(employee_id)
+{
+    return new Promise(function(resolve, reject)
+    {
+        db.serialize(function()
+        {
+            const sql =
+                `SELECT id, name, role
+                 FROM employees
+                 WHERE id = ${employee_id};`;
+
+            let listOfEmployees = [];
+
+            printTableHeader(["id", "name", "role"]);
+
+            const callbackToProcessEachRow = function(err, row)
+            {
+                if (err)
+                {
+                    reject(err);
+                }
+
+                // extract the values from the current row
+                const id = row.id;
+                const name = row.name;
+                const role = row.role;
+
+                // print the results of the current row
+                console.log(format("| %d | %s | %s |", id, name, role));
+
+                const employeeForCurrentRow = {
+                    id: id,
+                    name: name,
+                    role: role
+                };
+
+                listOfEmployees.push(employeeForCurrentRow);
+            };
+
+            const callbackAfterAllRowsAreProcessed = function()
+            {
+                resolve(listOfEmployees);
+            };
+
+            db.each(sql, callbackToProcessEachRow, callbackAfterAllRowsAreProcessed);
+        });
+    });
+}
+
 function createNewEmployee(createdEmployee){
     return new Promise(function (resolve, reject) {
         const sql = `
@@ -261,6 +310,7 @@ function getStoreNeeds()
 // these functions will be available from other files that import this module
 module.exports = {
     getAllEmployees,
+    getEmployee,
     createNewEmployee,
     getEmployeeAvailability,
     getShifts,
