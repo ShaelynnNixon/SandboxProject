@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const app = express();
+const app = require('./app');
 const port = 3000;
 
 // Sample data - in a real app, this would be in a database
