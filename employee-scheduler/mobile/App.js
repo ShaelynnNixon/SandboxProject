@@ -14,7 +14,7 @@ import {
 
 export default function App() {
   // Replace with your computer's actual IP address
-  const SERVER_URL = 'http://10.3.165.37:3000';
+  const SERVER_URL = 'http://192.168.0.28:3000';
   
   // App state
   const [loading, setLoading] = useState(false);
