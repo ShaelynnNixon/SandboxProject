@@ -1,36 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  SafeAreaView, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput,
+import {
+  StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
   Alert,
   ActivityIndicator,
   Modal
 } from 'react-native';
 
+// Import components
+import EmployeeCard from './components/EmployeeCard';
+import EmployeeForm from './components/EmployeeForm';
+import AvailabilityForm from './components/AvailabilityForm';
+
+// Import API services
+import * as api from './services/apiService';
+
 export default function App() {
   // Replace with your computer's actual IP address
   const SERVER_URL = 'http://10.3.165.37:3000';
-  
+
   // App state
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [storeSettings, setStoreSettings] = useState(null);
-  const [currentView, setCurrentView] = useState('employees'); // 'employees', 'settings', 'addEmployee'
+  const [currentView, setCurrentView] = useState('employees'); // 'employees', 'settings', 'addEmployee', 'addAvailability'
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedAvailability, setSelectedAvailability] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({
-    name: '',
-    hourPreferences: {
-      minHoursPerWeek: 20,
-      maxHoursPerWeek: 40,
-      maxHoursPerDay: 8
-    }
-  });
+  const [availabilityModalVisible, setAvailabilityModalVisible] = useState(false);
 
   // Fetch employees on component mount
   useEffect(() => {
@@ -42,9 +43,7 @@ export default function App() {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${SERVER_URL}/api/employees`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      const data = await api.getEmployees();
       setEmployees(data);
     } catch (error) {
       Alert.alert('Error', `Failed to fetch employees: ${error.message}`);
@@ -66,34 +65,11 @@ export default function App() {
     }
   };
 
-  const addEmployee = async () => {
-    if (!newEmployee.name.trim()) {
-      Alert.alert('Error', 'Employee name is required');
-      return;
-    }
-
+  const handleAddEmployee = async (employee) => {
     setLoading(true);
     try {
-      const response = await fetch(`${SERVER_URL}/api/employees`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newEmployee),
-      });
-      
-      if (!response.ok) throw new Error('Network response was not ok');
-      
-      const data = await response.json();
-      setEmployees([...employees, data]);
-      setNewEmployee({
-        name: '',
-        hourPreferences: {
-          minHoursPerWeek: 20,
-          maxHoursPerWeek: 40,
-          maxHoursPerDay: 8
-        }
-      });
+      const data = await api.createEmployee(employee);
+      await fetchEmployees(); // Refresh the employee list
       setCurrentView('employees');
       Alert.alert('Success', 'Employee added successfully');
     } catch (error) {
@@ -104,14 +80,9 @@ export default function App() {
     }
   };
 
-  const deleteEmployee = async (id) => {
+  const handleDeleteEmployee = async (id) => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/employees/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Network response was not ok');
-      
+      await api.deleteEmployee(id);
       setEmployees(employees.filter(emp => emp.id !== id));
       Alert.alert('Success', 'Employee deleted successfully');
     } catch (error) {
@@ -120,313 +91,291 @@ export default function App() {
     }
   };
 
+  const handleAddAvailability = async (availability) => {
+    setLoading(true);
+    try {
+      // Instead of just showing an alert, log the data that would be submitted
+      console.log('Submitting availability:', availability);
+
+      // You would typically call an API function here like:
+      // await api.addEmployeeAvailability(selectedEmployee.id, availability);
+
+      // For now, let's simulate success
+      Alert.alert('Success', 'Availability added successfully');
+
+      // Close the modal and return to employee list
+      setAvailabilityModalVisible(false);
+      setCurrentView('employees');
+    } catch (error) {
+      Alert.alert('Error', `Failed to add availability: ${error.message}`);
+      console.error('Error adding availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Render functions
   const renderEmployeeList = () => {
     if (loading) {
       return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.loadingText}>Loading employees...</Text>
-        </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Loading employees...</Text>
+          </View>
       );
     }
 
     return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.headerRow}>
-          <Text style={styles.sectionTitle}>Employees</Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={() => setCurrentView('addEmployee')}
-          >
-            <Text style={styles.addButtonText}>+ Add</Text>
-          </TouchableOpacity>
-        </View>
-
-        {employees.length === 0 ? (
-          <Text style={styles.emptyText}>No employees found. Add your first employee.</Text>
-        ) : (
-          employees.map(employee => (
-            <TouchableOpacity 
-              key={employee.id}
-              style={styles.employeeCard}
-              onPress={() => {
-                setSelectedEmployee(employee);
-                setModalVisible(true);
-              }}
+        <View style={styles.sectionContainer}>
+          <View style={styles.headerRow}>
+            <Text style={styles.sectionTitle}>Employees</Text>
+            <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setCurrentView('addEmployee')}
             >
-              <View style={styles.employeeInfo}>
-                <Text style={styles.employeeName}>{employee.name}</Text>
-                <Text style={styles.employeeDetail}>
-                  Hours: {employee.hourPreferences?.minHoursPerWeek ?? 0}–{employee.hourPreferences?.maxHoursPerWeek ?? 0} hrs/week
-                </Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.deleteButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Confirm Delete',
-                    `Are you sure you want to delete ${employee.name}?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Delete', onPress: () => deleteEmployee(employee.id), style: 'destructive' }
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
+              <Text style={styles.addButtonText}>+ Add</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </View>
-    );
-  };
+          </View>
 
-  const renderAddEmployeeForm = () => {
-    return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.headerRow}>
-          <Text style={styles.sectionTitle}>Add New Employee</Text>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => setCurrentView('employees')}
-          >
-            <Text style={styles.backButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={newEmployee.name}
-            onChangeText={(text) => setNewEmployee({...newEmployee, name: text})}
-            placeholder="Employee Name"
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Minimum Hours per Week</Text>
-          <TextInput
-            style={styles.input}
-            value={String(newEmployee.hourPreferences.minHoursPerWeek)}
-            onChangeText={(text) => {
-              const value = parseInt(text) || 0;
-              setNewEmployee({
-                ...newEmployee, 
-                hourPreferences: {
-                  ...newEmployee.hourPreferences,
-                  minHoursPerWeek: value
-                }
-              });
-            }}
-            placeholder="Minimum Hours"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Maximum Hours per Week</Text>
-          <TextInput
-            style={styles.input}
-            value={String(newEmployee.hourPreferences.maxHoursPerWeek)}
-            onChangeText={(text) => {
-              const value = parseInt(text) || 0;
-              setNewEmployee({
-                ...newEmployee, 
-                hourPreferences: {
-                  ...newEmployee.hourPreferences,
-                  maxHoursPerWeek: value
-                }
-              });
-            }}
-            placeholder="Maximum Hours"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Maximum Hours per Day</Text>
-          <TextInput
-            style={styles.input}
-            value={String(newEmployee.hourPreferences.maxHoursPerDay)}
-            onChangeText={(text) => {
-              const value = parseInt(text) || 0;
-              setNewEmployee({
-                ...newEmployee, 
-                hourPreferences: {
-                  ...newEmployee.hourPreferences,
-                  maxHoursPerDay: value
-                }
-              });
-            }}
-            placeholder="Maximum Hours Per Day"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <TouchableOpacity 
-          style={styles.submitButton}
-          onPress={addEmployee}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
+          {employees.length === 0 ? (
+              <Text style={styles.emptyText}>No employees found. Add your first employee.</Text>
           ) : (
-            <Text style={styles.submitButtonText}>Add Employee</Text>
+              employees.map(employee => (
+                  <EmployeeCard
+                      key={employee.id}
+                      employee={employee}
+                      onPress={(emp, availability) => {
+                        setSelectedEmployee(emp);
+                        setSelectedAvailability(availability);
+                        setModalVisible(true);
+                      }}
+                      onDelete={handleDeleteEmployee}
+                  />
+              ))
           )}
-        </TouchableOpacity>
-      </View>
+        </View>
     );
   };
 
   const renderStoreSettings = () => {
     if (!storeSettings) {
       return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.loadingText}>Loading store settings...</Text>
-        </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Loading store settings...</Text>
+          </View>
       );
     }
 
     return (
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Store Settings</Text>
-        
-        <View style={styles.settingsCard}>
-          <Text style={styles.settingsTitle}>Operating Hours</Text>
-          {Object.entries(storeSettings.operatingHours).map(([day, hours]) => (
-            <View key={day} style={styles.settingsRow}>
-              <Text style={styles.settingsDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
-              <Text style={styles.settingsHours}>
-                {hours ? `${hours.open} - ${hours.close}` : 'Closed'}
-              </Text>
-            </View>
-          ))}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Store Settings</Text>
+
+          <View style={styles.settingsCard}>
+            <Text style={styles.settingsTitle}>Operating Hours</Text>
+            {Object.entries(storeSettings.operatingHours).map(([day, hours]) => (
+                <View key={day} style={styles.settingsRow}>
+                  <Text style={styles.settingsDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
+                  <Text style={styles.settingsHours}>
+                    {hours ? `${hours.open} - ${hours.close}` : 'Closed'}
+                  </Text>
+                </View>
+            ))}
+          </View>
+
+          <View style={styles.settingsCard}>
+            <Text style={styles.settingsTitle}>Labor Requirements</Text>
+            <Text style={styles.settingsNote}>
+              Labor requirements can be configured for different time slots throughout the day
+            </Text>
+            {storeSettings.laborRequirements && storeSettings.laborRequirements.monday ? (
+                storeSettings.laborRequirements.monday.map((requirement, index) => (
+                    <View key={index} style={styles.settingsRow}>
+                      <Text style={styles.settingsTime}>{requirement.time}</Text>
+                      <Text style={styles.settingsStaff}>{requirement.required} staff needed</Text>
+                    </View>
+                ))
+            ) : (
+                <Text style={styles.emptyText}>No labor requirements configured</Text>
+            )}
+          </View>
         </View>
-        
-        <View style={styles.settingsCard}>
-          <Text style={styles.settingsTitle}>Labor Requirements</Text>
-          <Text style={styles.settingsNote}>
-            Labor requirements can be configured for different time slots throughout the day
-          </Text>
-          {storeSettings.laborRequirements && storeSettings.laborRequirements.monday ? (
-            storeSettings.laborRequirements.monday.map((requirement, index) => (
-              <View key={index} style={styles.settingsRow}>
-                <Text style={styles.settingsTime}>{requirement.time}</Text>
-                <Text style={styles.settingsStaff}>{requirement.required} staff needed</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No labor requirements configured</Text>
-          )}
-        </View>
-      </View>
     );
   };
 
   const renderEmployeeModal = () => {
     if (!selectedEmployee) return null;
-    
+
     return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(false);
-          setSelectedEmployee(null);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedEmployee.name}</Text>
-              <TouchableOpacity 
-                onPress={() => {
-                  setModalVisible(false);
-                  setSelectedEmployee(null);
-                }}
-              >
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(false);
+              setSelectedEmployee(null);
+            }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{selectedEmployee.name}</Text>
+                <TouchableOpacity
+                    onPress={() => {
+                      setModalVisible(false);
+                      setSelectedEmployee(null);
+                    }}
+                >
+                  <Text style={styles.modalCloseText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView>
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Employee Details</Text>
+                  <View style={styles.modalRow}>
+                    <Text style={styles.modalLabel}>Name:</Text>
+                    <Text style={styles.modalValue}>{selectedEmployee.name}</Text>
+                  </View>
+                  <View style={styles.modalRow}>
+                    <Text style={styles.modalLabel}>Role:</Text>
+                    <Text style={styles.modalValue}>{selectedEmployee.role || 'Staff'}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.modalSection}>
+                  <View style={styles.modalSectionHeader}>
+                    <Text style={styles.modalSectionTitle}>Availability</Text>
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => {
+                          setModalVisible(false);
+                          setAvailabilityModalVisible(true);
+                        }}
+                    >
+                      <Text style={styles.addButtonText}>+ Add</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {selectedAvailability && selectedAvailability.length > 0 ? (
+                      selectedAvailability.map((avail, index) => (
+                          <View key={index} style={styles.modalRow}>
+                            <Text style={styles.modalLabel}>{avail.day_of_week}:</Text>
+                            <Text style={styles.modalValue}>{avail.start_time} - {avail.end_time}</Text>
+                          </View>
+                      ))
+                  ) : (
+                      <Text style={styles.emptyText}>No availability set</Text>
+                  )}
+                </View>
+              </ScrollView>
             </View>
-            
-            <ScrollView>
-              <View style={styles.modalSection}>
-                <Text style={styles.modalSectionTitle}>Hour Preferences</Text>
-                <View style={styles.modalRow}>
-                  <Text style={styles.modalLabel}>Min Hours/Week:</Text>
-                  <Text style={styles.modalValue}>{selectedEmployee.hourPreferences.minHoursPerWeek}</Text>
-                </View>
-                <View style={styles.modalRow}>
-                  <Text style={styles.modalLabel}>Max Hours/Week:</Text>
-                  <Text style={styles.modalValue}>{selectedEmployee.hourPreferences.maxHoursPerWeek}</Text>
-                </View>
-                <View style={styles.modalRow}>
-                  <Text style={styles.modalLabel}>Max Hours/Day:</Text>
-                  <Text style={styles.modalValue}>{selectedEmployee.hourPreferences.maxHoursPerDay}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.modalSection}>
-                <Text style={styles.modalSectionTitle}>Availability</Text>
-                {selectedEmployee.availability ? (
-                  Object.entries(selectedEmployee.availability).map(([day, hours]) => (
-                    <View key={day} style={styles.modalRow}>
-                      <Text style={styles.modalLabel}>{day.charAt(0).toUpperCase() + day.slice(1)}:</Text>
-                      <Text style={styles.modalValue}>
-                        {hours ? `${hours.start} - ${hours.end}` : 'Not Available'}
-                      </Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>No availability set</Text>
-                )}
-              </View>
-            </ScrollView>
           </View>
-        </View>
-      </Modal>
+        </Modal>
     );
   };
 
+  const renderAvailabilityModal = () => {
+    if (!selectedEmployee) return null;
+
+    return (
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={availabilityModalVisible}
+            onRequestClose={() => {
+              setAvailabilityModalVisible(false);
+            }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, { height: 400 }]}>
+              <View style={styles.headerRow}>
+                <Text style={styles.sectionTitle}>Add Availability for {selectedEmployee.name}</Text>
+                <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => {
+                      setAvailabilityModalVisible(false);
+                      setModalVisible(true);
+                    }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Day of Week</Text>
+                <View style={styles.input}>
+                  <Text>Monday</Text>
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Start Time</Text>
+                <View style={styles.input}>
+                  <Text>09:00</Text>
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>End Time</Text>
+                <View style={styles.input}>
+                  <Text>17:00</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => {
+                    Alert.alert('Success', 'Availability added (simulation)');
+                    setAvailabilityModalVisible(false);
+                  }}
+              >
+                <Text style={styles.submitButtonText}>Save Availability</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+    );
+  };
   // Main render
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Employee Scheduler</Text>
-      </View>
-      
-      <ScrollView style={styles.scrollView}>
-        {currentView === 'employees' && renderEmployeeList()}
-        {currentView === 'addEmployee' && renderAddEmployeeForm()}
-        {currentView === 'settings' && renderStoreSettings()}
-      </ScrollView>
-      
-      <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tab, currentView === 'employees' && styles.activeTab]}
-          onPress={() => setCurrentView('employees')}
-        >
-          <Text style={[styles.tabText, currentView === 'employees' && styles.activeTabText]}>Employees</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, currentView === 'settings' && styles.activeTab]}
-          onPress={() => setCurrentView('settings')}
-        >
-          <Text style={[styles.tabText, currentView === 'settings' && styles.activeTabText]}>Settings</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {renderEmployeeModal()}
-    </SafeAreaView>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Employee Scheduler</Text>
+        </View>
+
+        <ScrollView style={styles.scrollView}>
+          {currentView === 'employees' && renderEmployeeList()}
+          {currentView === 'addEmployee' && (
+              <View style={styles.sectionContainer}>
+                <EmployeeForm
+                    onSubmit={handleAddEmployee}
+                    onCancel={() => setCurrentView('employees')}
+                    loading={loading}
+                />
+              </View>
+          )}
+          {currentView === 'settings' && renderStoreSettings()}
+        </ScrollView>
+
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+              style={[styles.tab, currentView === 'employees' && styles.activeTab]}
+              onPress={() => setCurrentView('employees')}
+          >
+            <Text style={[styles.tabText, currentView === 'employees' && styles.activeTabText]}>Employees</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+              style={[styles.tab, currentView === 'settings' && styles.activeTab]}
+              onPress={() => setCurrentView('settings')}
+          >
+            <Text style={[styles.tabText, currentView === 'settings' && styles.activeTabText]}>Settings</Text>
+          </TouchableOpacity>
+        </View>
+
+        {renderEmployeeModal()}
+        {renderAvailabilityModal()}
+      </SafeAreaView>
   );
 }
 
@@ -481,50 +430,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  backButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  backButtonText: {
-    color: '#666',
-  },
-  employeeCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  employeeInfo: {
-    flex: 1,
-  },
-  employeeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  employeeDetail: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  deleteButton: {
-    backgroundColor: '#ffebee',
-    padding: 8,
-    borderRadius: 5,
-  },
-  deleteButtonText: {
-    color: '#d32f2f',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
   emptyText: {
     fontSize: 14,
     color: '#999',
@@ -539,36 +444,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: '#666',
-  },
-  formGroup: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#555',
-    marginBottom: 5,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: '#333',
-  },
-  submitButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 5,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  submitButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   settingsCard: {
     backgroundColor: '#f9f9f9',
@@ -678,6 +553,12 @@ const styles = StyleSheet.create({
   modalSection: {
     marginBottom: 20,
   },
+  modalSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   modalSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -700,4 +581,4 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
-})
+});

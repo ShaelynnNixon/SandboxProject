@@ -1,74 +1,156 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView
+} from 'react-native';
 
-const EmployeeCard = ({ employee, onPress, onDelete }) => {
-  const handleDelete = () => {
-    Alert.alert(
-      'Confirm Delete',
-      `Are you sure you want to delete ${employee.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', onPress: () => onDelete(employee.id), style: 'destructive' }
-      ]
-    );
+const EmployeeForm = ({ onSubmit, onCancel, loading }) => {
+  const [employee, setEmployee] = useState({
+    name: '',
+    role: 'Staff'
+  });
+
+  const handleChange = (field, value) => {
+    setEmployee({
+      ...employee,
+      [field]: value
+    });
+  };
+
+  const handleSubmit = () => {
+    if (!employee.name.trim()) {
+      alert('Employee name is required');
+      return;
+    }
+    onSubmit(employee);
   };
 
   return (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => onPress(employee)}
-    >
-      <View style={styles.info}>
-        <Text style={styles.name}>{employee.name}</Text>
-        <Text style={styles.detail}>
-          Hours: {employee.hourPreferences.minHoursPerWeek}-{employee.hourPreferences.maxHoursPerWeek} hrs/week
-        </Text>
-      </View>
-      <TouchableOpacity 
-        style={styles.deleteButton}
-        onPress={handleDelete}
-      >
-        <Text style={styles.deleteButtonText}>Delete</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+      <ScrollView style={styles.container}>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Add New Employee</Text>
+          <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onCancel}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+              style={styles.input}
+              value={employee.name}
+              onChangeText={(text) => handleChange('name', text)}
+              placeholder="Employee Name"
+              placeholderTextColor="#999"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Role</Text>
+          <TextInput
+              style={styles.input}
+              value={employee.role}
+              onChangeText={(text) => handleChange('role', text)}
+              placeholder="Employee Role"
+              placeholderTextColor="#999"
+          />
+        </View>
+
+        <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={loading}
+        >
+          {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+          ) : (
+              <Text style={styles.submitButtonText}>Add Employee</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.infoSection}>
+          <Text style={styles.infoText}>
+            Note: After adding an employee, you'll be able to set their availability on their profile.
+          </Text>
+        </View>
+      </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  container: {
+    flex: 1,
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
+    marginBottom: 15,
   },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
   },
-  detail: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  deleteButton: {
-    backgroundColor: '#ffebee',
-    padding: 8,
+  cancelButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
-  deleteButtonText: {
-    color: '#d32f2f',
-    fontSize: 12,
+  cancelButtonText: {
+    color: '#666',
+  },
+  formGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  submitButtonText: {
+    color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  infoSection: {
+    backgroundColor: '#e8f5e9',
+    padding: 12,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#2e7d32',
   },
 });
 
-export default EmployeeCard;
+export default EmployeeForm;

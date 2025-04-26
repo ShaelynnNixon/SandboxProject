@@ -1,36 +1,68 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { getEmployeeAvailability } from '../services/apiService';
 
 const EmployeeCard = ({ employee, onPress, onDelete }) => {
+  const [availability, setAvailability] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Load availability if the component is mounted
+    loadAvailability();
+  }, []);
+
+  const loadAvailability = async () => {
+    if (!employee.id) return;
+
+    setLoading(true);
+    try {
+      const data = await getEmployeeAvailability(employee.id);
+      setAvailability(data);
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = () => {
     Alert.alert(
-      'Confirm Delete',
-      `Are you sure you want to delete ${employee.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', onPress: () => onDelete(employee.id), style: 'destructive' }
-      ]
+        'Confirm Delete',
+        `Are you sure you want to delete ${employee.name}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', onPress: () => onDelete(employee.id), style: 'destructive' }
+        ]
     );
   };
 
   return (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => onPress(employee)}
-    >
-      <View style={styles.info}>
-        <Text style={styles.name}>{employee.name}</Text>
-        <Text style={styles.detail}>
-          Hours: {employee.hourPreferences.minHoursPerWeek}-{employee.hourPreferences.maxHoursPerWeek} hrs/week
-        </Text>
-      </View>
-      <TouchableOpacity 
-        style={styles.deleteButton}
-        onPress={handleDelete}
+      <TouchableOpacity
+          style={styles.card}
+          onPress={() => onPress(employee, availability)}
       >
-        <Text style={styles.deleteButtonText}>Delete</Text>
+        <View style={styles.info}>
+          <Text style={styles.name}>{employee.name}</Text>
+          <Text style={styles.detail}>
+            Role: {employee.role || 'Staff'}
+          </Text>
+          {loading ? (
+              <ActivityIndicator size="small" color="#4CAF50" />
+          ) : availability ? (
+              <Text style={styles.detail}>
+                Available: {availability.length} days
+              </Text>
+          ) : (
+              <Text style={styles.detail}>No availability set</Text>
+          )}
+        </View>
+        <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
   );
 };
 
