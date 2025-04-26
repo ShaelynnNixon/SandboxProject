@@ -1,5 +1,5 @@
 // Replace this with your computer's actual IP address
-const API_URL = 'http://192.168.0.28/api';
+const API_URL = 'http://10.3.165.37:3000/api';
 
 /**
  * Fetch all employees from the API

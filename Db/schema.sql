@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS employees;
-DROP TABLE IF EXISTS availabilty;
+DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS store_needs;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS schedule_shifts;

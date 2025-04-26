@@ -14,7 +14,7 @@ import {
 
 export default function App() {
   // Replace with your computer's actual IP address
-  const SERVER_URL = 'http://192.168.0.28:3000';
+  const SERVER_URL = 'http://10.3.165.37:3000';
   
   // App state
   const [loading, setLoading] = useState(false);
@@ -158,7 +158,7 @@ export default function App() {
               <View style={styles.employeeInfo}>
                 <Text style={styles.employeeName}>{employee.name}</Text>
                 <Text style={styles.employeeDetail}>
-                  Hours: {employee.hourPreferences.minHoursPerWeek}-{employee.hourPreferences.maxHoursPerWeek} hrs/week
+                  Hours: {employee.hourPreferences?.minHoursPerWeek ?? 0}–{employee.hourPreferences?.maxHoursPerWeek ?? 0} hrs/week
                 </Text>
               </View>
               <TouchableOpacity 
